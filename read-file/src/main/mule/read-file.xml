@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+	<file:config name="File_Config" doc:name="File Config" doc:id="d27f76ff-09c8-408a-b2ce-ad6ef8fc9de1" >
+		<file:connection workingDir="${file.path}"/>
+	</file:config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="c451220c-5112-401f-8f34-b2334e2585de" >
+		<http:request-connection host="${request.host}" port="${request.port}"/>
+	</http:request-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="16bbf0d1-7ecf-4443-9731-991d5ce848fb" file="config.yaml" />
+	<flow name="read-fileFlow" doc:id="251a0f76-cc54-4eb2-ade6-f4efe44b9c57" >
+		<scheduler doc:name="Scheduler" doc:id="9d6afe1e-da77-4cc2-9c68-3fa00609f017" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="${schedular.time}" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="Logger" doc:id="a862db68-2a1d-4a27-93cb-47803e364f8e" message="karanvir "/>
+		<file:read doc:id="b6f8a6cf-1e57-4356-80a7-049cbc433de1" config-ref="File_Config" path="${file.name}"/>
+		<ee:transform doc:name="Transform Message" doc:id="f651f01e-fe23-4889-b32b-7df728c19289" >
+			<ee:message >
+				<ee:set-payload resource="dataweave/transform.dwl" />
+			</ee:message>
+		</ee:transform>
+		<json:validate-schema doc:id="1f64a4ec-9681-416f-b200-e6db8b56b957" schema="schema/schema.json" />
+		<choice doc:name="Choice" doc:id="cb28ae2e-088d-46b4-b114-04762f86902f" >
+			<when expression="sizeOf(payload) &gt; 0">
+				<logger level="INFO" doc:name="Logger" doc:id="f00092cb-ba88-41d2-bd5a-06b500c878fd" message="File is present"/>
+			</when>
+			<otherwise >
+				<http:request method="POST" doc:name="Request email-sapi" doc:id="ef7026a3-5f8b-4fcb-a792-46d1cff38c3e" config-ref="HTTP_Request_configuration" path="/${request.path}">
+					<http:body><![CDATA[#[output application/json
+---
+{
+    "emailType": "no records",
+    "file": "read.csv"
+}]]]></http:body>
+				</http:request>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b4fffc5e-f6e5-4b6a-86f5-a7b31b1946ff" type="FILE:ILLEGAL_PATH">
+				<logger level="INFO" doc:name="Logger" doc:id="00737776-7d36-4e56-aee4-24f794aa5dc4" message="No File is present in directory or Empty Directory"/>
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7a40a7d0-7251-4b86-b8b8-da022e984f76" type="JSON:SCHEMA_NOT_HONOURED">
+				<http:request method="POST" doc:name="Request Email-sapi" doc:id="b47b4661-0d52-49fb-99a6-bb64a981f5a2" config-ref="HTTP_Request_configuration" path="/${request.path}" >
+					<http:body ><![CDATA[#[output application/json
+---
+{
+    "emailType": "null",
+    "file": "read.csv"
+}]]]></http:body>
+				</http:request>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

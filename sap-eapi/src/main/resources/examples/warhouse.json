@@ -1,0 +1,10 @@
+{
+  "source": "SFDC",
+  "orderId": "O-010",
+  "customerName": "jondeep",
+  "orderStatus": "pending",
+  "orderReceivedDate": "2021-05-18",
+  "orderFulfillmentDate": "2021-05-19",
+  "quantity": "45.0",
+  "amount": "23235.32"
+}

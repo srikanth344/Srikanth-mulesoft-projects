@@ -1,0 +1,10 @@
+schedular: 
+  time: 5
+file: 
+  path: C:\Users\karan\OneDrive\Desktop\file
+  name: readfile.csv
+request: 
+  host: localhost
+  port: 8082
+  path: email
+  

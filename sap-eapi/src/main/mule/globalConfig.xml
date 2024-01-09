@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	<http:listener-config name="SAP_HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="c00b0aa5-d0c3-433b-ba6a-caeed3e61345" >
+		<http:listener-connection host="0.0.0.0" port='${http.port}' />
+	</http:listener-config>
+	<http:request-config name="SAP_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="ac02e24e-a61a-4714-b707-75f115f97f8b" basePath="${SAP.basepath}">
+		<http:request-connection protocol="HTTPS" host="${SAP.host}" />
+	</http:request-config>
+	<amqp:config name="AMQP_Config" doc:name="AMQP Config" doc:id="2a3b867b-1f9d-43a3-8e3a-491119d8edab" >
+		<amqp:connection host="puffin.rmq2.cloudamqp.com" virtualHost="rdtpaqdd" username="rdtpaqdd" password="JtKc6Rrdg4fiE5IGzZf54REgR2lLyaGI" port="5671" useTls="true">
+			<amqp:fallback-addresses />
+		</amqp:connection>
+	</amqp:config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="4260013b-7914-4dcf-a93d-9dd0983b6e84" >
+		<jms:active-mq-connection>
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616"/>
+		</jms:active-mq-connection>
+	</jms:config>
+	<http:request-config name="DatawareHouseHTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="86acdfc2-a321-4109-9535-26583f7b608e" basePath="/api" >
+		<http:request-connection protocol="HTTPS" host="datawarehouse-sapi.us-e2.cloudhub.io"/>
+	</http:request-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="bfd91fea-54b6-49f9-8050-a2d45a1ba6c3" file="app.properties" />
+	<os:config name="watermarking" doc:name="ObjectStore Config" doc:id="0bdea6db-5f9c-42fd-b1c3-daa6a60e9e40" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="2c94ba10-0879-4821-8807-15010b9b9d8c" file="app.properties" key="${key}" />
+	<http:request-config name="ERP_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="9a8d56f9-65ec-46d1-a082-224f576dad02" basePath="/axelor-erp" >
+		<http:request-connection host="erp.fastcomcorp.com" protocol="HTTPS">
+			<http:authentication >
+				<http:basic-authentication username="admin" password="admin" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+</mule>

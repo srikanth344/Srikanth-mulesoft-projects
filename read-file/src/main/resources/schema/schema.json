@@ -1,0 +1,108 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "array",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": [],
+    "examples": [
+        [
+            {
+                "customerId": "245",
+                "customerName": "Karanvir Singh",
+                "productId": "P-109",
+                "Quantity": "16",
+                "country": "INDIA"
+            },
+            {
+                "customerId": "246",
+                "customerName": "Srikant ",
+                "productId": "P-101",
+                "Quantity": "15",
+                "country": "INDIA"
+            }
+        ]
+    ],
+    "additionalItems": true,
+    "items": {
+        "$id": "#/items",
+        "anyOf": [
+            {
+                "$id": "#/items/anyOf/0",
+                "type": "object",
+                "title": "The first anyOf schema",
+                "description": "An explanation about the purpose of this instance.",
+                "default": {},
+                "examples": [
+                    {
+                        "customerId": "245",
+                        "customerName": "Karanvir Singh",
+                        "productId": "P-109",
+                        "Quantity": "16",
+                        "country": "INDIA"
+                    }
+                ],
+                "required": [
+                    "customerId",
+                    "customerName",
+                    "productId",
+                    "Quantity",
+                    "country"
+                ],
+                "properties": {
+                    "customerId": {
+                        "$id": "#/items/anyOf/0/properties/customerId",
+                        "type": "string",
+                        "title": "The customerId schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": "",
+                        "examples": [
+                            "245"
+                        ]
+                    },
+                    "customerName": {
+                        "$id": "#/items/anyOf/0/properties/customerName",
+                        "type": "string",
+                        "title": "The customerName schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": "",
+                        "examples": [
+                            "Karanvir Singh"
+                        ]
+                    },
+                    "productId": {
+                        "$id": "#/items/anyOf/0/properties/productId",
+                        "type": "string",
+                        "title": "The productId schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": "",
+                        "examples": [
+                            "P-109"
+                        ]
+                    },
+                    "Quantity": {
+                        "$id": "#/items/anyOf/0/properties/Quantity",
+                        "type": "string",
+                        "title": "The Quantity schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": "",
+                        "examples": [
+                            "16"
+                        ]
+                    },
+                    "country": {
+                        "$id": "#/items/anyOf/0/properties/country",
+                        "type": "string",
+                        "title": "The country schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": "",
+                        "examples": [
+                            "INDIA"
+                        ]
+                    }
+                },
+                "additionalProperties": true
+            }
+        ]
+    }
+}

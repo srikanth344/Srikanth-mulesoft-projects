@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="orderDataWarehouse" format="json">
+      <types:shape format="weave" example="examples/warhouse.json"><![CDATA[%dw 2.0
+
+type orderDataWarehouse = {|
+  source: String, 
+  orderId: String, 
+  customerName: String, 
+  orderStatus: String, 
+  orderReceivedDate: String, 
+  orderFulfillmentDate: String, 
+  quantity: String, 
+  amount: String
+|} {"example": "{\\\"source\\\":\\\"SFDC\\\",\\\"orderId\\\":\\\"O-010\\\",\\\"customerName\\\":\\\"jondeep\\\",\\\"orderStatus\\\":\\\"pending\\\",\\\"orderReceivedDate\\\":\\\"2021-05-18\\\",\\\"orderFulfillmentDate\\\":\\\"2021-05-19\\\",\\\"quantity\\\":\\\"45.0\\\",\\\"amount\\\":\\\"23235.32\\\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#eb70fd3d-0311-46de-a7e9-597c070b4850">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="orderDataWarehouse"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

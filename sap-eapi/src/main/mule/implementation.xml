@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="4f15f0e3-b4b8-4c39-9f6a-0e1be7fd0021" />
+	<flow name="getSAP" doc:id="edd99804-e77f-4fd2-828c-f7d158d80b1e">
+		<scheduler doc:name="Scheduler" doc:id="e2789f70-6e22-407c-9c19-3058a5c0cd66">
+			<scheduling-strategy>
+				<fixed-frequency timeUnit="HOURS" frequency="2" />
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="Logger" doc:id="9c531eb5-c99d-4209-8826-4e188ff619fd" message="#[payload]" />
+		<os:retrieve doc:name="Retrieve" doc:id="e3c61718-9fa3-4add-bad5-83f37dc3c597" key="skip" target="skip" objectStore="Object_store">
+			<os:default-value ><![CDATA[#[0]]]></os:default-value>
+		</os:retrieve>
+		<http:request method="GET" doc:name="Copy_of_Request_To_SAP" doc:id="b27b5f0d-d36d-4e4e-9d9f-5d5e8f3a3f72" config-ref="SAP_HTTP_Request_configuration" path="${SAP.path}">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"APIKey" : ${SAP.APIKey},
+	"Accept" : ${SAP.accept}
+}]]]></http:headers>
+			<http:query-params><![CDATA[#[output application/json
+---
+{
+	"\$top" : ${SAP.top},
+	"\$skip" : vars.skip,
+	"\$select" :  ${SAP.select}
+	}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="size" doc:id="30caa70f-e885-4c73-b5a4-a113527e05ac" message="#[sizeOf(payload.d.results)]" />
+		<os:store doc:name="Store_data_skipped" doc:id="eb4aa207-4305-490e-95e4-73cf0cdbfcb0" key="skip" objectStore="Object_store">
+			<os:value ><![CDATA[#[vars.skip as Number + 10]]]></os:value>
+		</os:store>
+		<logger level="INFO" doc:name="skiped data" doc:id="0b179198-daaf-4e55-b17f-9d0f7fe2440d" message="#[vars.skip]"/>
+		<ee:transform doc:name="Transform Message" doc:id="eb70fd3d-0311-46de-a7e9-597c070b4850" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.d.results map(object,index)->{
+	source: "SAP",
+	orderId:object.ID,
+	customerName: object.BuyerPartyName,
+	orderStatus: object.ReplicationProcessingStatusCodeText,
+	orderReceivedDate: (object.DateTime replace ("/Date(") with ("") splitBy(")"))[0] as Number as DateTime{
+		unit:"milliseconds"} as Date as String,
+	amount: object.GrossAmounts
+}
+ 
+
+
+//orderBy ((value, key) -> value.ID)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="38034186-44c1-44b4-ab0e-7a6bd53ae9a0" message="#[payload]"/>
+		<http:request method="POST" doc:name="Request_To_DatawareHouse" doc:id="1e5b5370-15de-4688-acc5-8ef82b0ab03a" config-ref="DatawareHouseHTTP_Request_configuration" path="/Orders">
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="80d328af-bda4-4c66-a66d-b9ffa348a8ba" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="JMS" doc:id="37cd8bc5-40d7-401b-9741-e768ceb018e8" initialState="stopped">
+		<jms:listener doc:name="On New Message" doc:id="b7670e32-c7ee-4b0e-ac95-acbbd0b769ea" config-ref="JMS_Config" destination="in">
+			<jms:response outboundContentType="application/text" />
+		</jms:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="ccd8e329-e3bd-4bae-bdcb-b7af17563905" message="#[payload]"/>
+	</flow>
+	<flow name="implementationFlow" doc:id="e8d26d5f-b043-4324-a17d-2779dd388ae3" >
+		<http:listener doc:name="Listener" doc:id="2691038c-dfc4-4b20-a836-78ea3f71654c" path="/rmq" config-ref="SAP_HTTP_Listener_config"/>
+		<amqp:publish doc:name="Publish" doc:id="6697ef9d-ed73-494f-b86b-2dec82c1a2b2" config-ref="AMQP_Config" exchangeName="rabbit"/>
+	</flow>
+	<flow name="Copy_of_implementationFlow1" doc:id="fac16458-320c-43aa-b8ef-b1aa72092843" >
+		<http:listener doc:name="Listener" doc:id="65c55e07-4896-4574-8409-2a4fd0ca71d1" config-ref="SAP_HTTP_Listener_config" path="/test"/>
+		<http:request method="GET" doc:name="Request" doc:id="d14112ea-d254-4e17-9a72-36232f8053c1" config-ref="ERP_HTTP_Request_configuration" path="/ws/rest/com.axelor.apps.sale.db.SaleOrder">
+		</http:request>
+	</flow>
+	<flow name="implementationFlow2" doc:id="7b249273-5681-4ec5-a7ec-305949405037" initialState="stopped">
+		<amqp:listener doc:name="Listener" doc:id="238c135b-1e08-416e-9d82-f2f9401bf9f1" config-ref="AMQP_Config" queueName="employee"/>
+		<logger level="INFO" doc:name="Logger" doc:id="095ab616-2035-4f6b-8f05-5562f416cf61" message="#[payload]"/>
+	</flow>
+</mule>
+
